@@ -1,27 +1,35 @@
 #!/usr/bin/env python3
-"""Generate the 22 Nov 2026 world-news broadsheet (1024x1024 PNG).
+"""Generate the 22 Nov 2026 world-news front page v2 (1024x1024).
 
+Visual-first photo broadsheet: hero photo + two photos + compact story list.
 Deterministic: fixed fonts, fixed layout, no timestamps, no randomness.
 Run: python3 gen_image.py  -> writes entry.png next to this file.
 Stories were researched 23 Nov 2026 from Reuters, AP, AFP, Al Jazeera,
 Daily Summary of World (dailysummaryof.com/world/2026-11-22),
 Bangladesh Chronicle and LiveScore/FBref. Every event happened or was
 first reported on Sunday 22 November 2026 (any time zone).
+Photos are AI-generated illustrations of the three lead events.
 """
-import textwrap
+import os
 from PIL import Image, ImageDraw, ImageFont
 
 W, H = 1024, 1024
 FONT_DIR = "/usr/share/fonts/truetype/dejavu"
+HERE = os.path.dirname(os.path.abspath(__file__))
+ASSETS = os.path.join(HERE, "..", "v2-assets")
+
 
 def f_bold(size):
     return ImageFont.truetype(FONT_DIR + "/DejaVuSans-Bold.ttf", size)
 
+
 def f_reg(size):
     return ImageFont.truetype(FONT_DIR + "/DejaVuSans.ttf", size)
 
+
 def f_serif_bold(size):
     return ImageFont.truetype(FONT_DIR + "/DejaVuSerif-Bold.ttf", size)
+
 
 NAVY = (15, 42, 74)
 RED = (178, 34, 34)
@@ -31,124 +39,84 @@ LIGHT = (242, 244, 247)
 CREAM = (253, 246, 227)
 RULE = (200, 200, 200)
 
-# (utc_time, headline, detail, source)
-LEADS = [
-    ("12:00 UTC", "COP31 ENDS WITH NO DEAL",
-     "EU rejects final text that omits fossil fuels; climate talks in Antalya collapse after two weeks.",
-     "REUTERS / AP"),
-    ("17:13 UTC", "TWO TANKERS HIT MINES AT HORMUZ",
-     "Iran's navy says two supertankers struck naval mines and caught fire east of the Strait of Hormuz.",
-     "DAILY SUMMARY / UKMTO"),
-    ("22 NOV", "'EL CHAPO ISIDRO' CAPTURED",
-     "Mexican forces seize FBI Top-10 fugitive Fausto Isidro Meza Flores; 11 killed in the Sinaloa raid.",
-     "AP / REUTERS"),
+# (asset file, headline, meta) for the three photo stories
+PHOTOS = [
+    ("media-generation-cop31-antalya-0-9b982790-1ded-4875-8906-467942232342.webp",
+     "COP31 ends with no deal",
+     "EU rejects final text without fossil fuels  •  12:00 UTC  •  REUTERS / AP"),
+    ("media-generation-hormuz-tankers-0-5590228b-8562-40cd-a0df-57710f6d1365.webp",
+     "Two supertankers hit mines at Hormuz",
+     "Ships ablaze east of the Strait  •  17:13 UTC  •  DAILY SUMMARY / UKMTO"),
+    ("media-generation-sinaloa-raid-0-c170b851-47c7-41dd-9759-af20aa0e97eb.webp",
+     "'El Chapo Isidro' captured in Sinaloa",
+     "FBI Top-10 fugitive seized; 11 killed in raid  •  AP / REUTERS"),
 ]
 
 SECTIONS = [
     ("THE GULF & MIDDLE EAST", [
-        ("03:24", "Iran strikes Bahrain base and factory",
-         "Civilian site hit near Manama, 2 hurt; Iran says it hit 2 Patriot radars.", "REUTERS / AFP"),
-        ("09:53", "UAE condemns Iran attack on Bahrain",
-         "Calls the strikes a violation of Bahrain's sovereignty.", "DAILY SUMMARY"),
-        ("13:16", "Saudi intercepts Houthi drone, missile",
-         "Houthis claim a strike on the Rabigh refinery on the Red Sea.", "DAILY SUMMARY"),
-        ("14:20", "Iran unveils dual-missile launcher",
-         "State media shows a new underground 'missile city'.", "DAILY SUMMARY"),
-        ("02:09", "Pezeshkian: Iran in 'silent economic war'",
-         "US naval blockade hits 130 days as oil exports are squeezed.", "DAILY SUMMARY"),
-        ("05:48", "Three killed in Gaza food-aid strike",
-         "World Central Kitchen says the vehicle hit was not its team.", "DAILY SUMMARY"),
-        ("02:14", "Displaced Palestinians protest in Gaza",
-         "350,000 families homeless after 80% of homes were destroyed.", "DAILY SUMMARY"),
+        ("03:24", "Iran strikes Bahrain base", "REUTERS / AFP"),
+        ("09:53", "UAE condemns Iran attack on Bahrain", "DAILY SUMMARY"),
+        ("13:16", "Saudi intercepts Houthi drone", "DAILY SUMMARY"),
+        ("14:20", "Iran unveils dual-missile launcher", "DAILY SUMMARY"),
+        ("02:09", "Pezeshkian: 'silent economic war'", "DAILY SUMMARY"),
+        ("05:48", "Three killed in Gaza food-aid strike", "DAILY SUMMARY"),
+        ("02:14", "Displaced Palestinians protest in Gaza", "DAILY SUMMARY"),
     ]),
     ("UKRAINE & EUROPE", [
-        ("22 NOV", "Russian missile hits Kryvyi Rih",
-         "A boy, 7, and a woman, 20, killed; about 60 wounded.", "AP / CNN"),
-        ("14:48", "Zelenskyy urges US to release Patriots",
-         "Partners paid; Russia fired 2,700 drones in a week.", "DAILY SUMMARY"),
-        ("15:36", "Sea drone hits Russian corvette Merkury",
-         "Explosion and fire at the Benghazi naval base in eastern Libya.", "DAILY SUMMARY"),
-        ("22 NOV", "Russian cargo ship Sparta II on fire",
-         "Burning in the Baltic after a suspected Ukrainian drone strike.", "AP / REUTERS"),
-        ("06:15", "Finland: war is spilling over",
-         "Helsinki reacts after the Baltic drone strike on the Russian ship.", "DAILY SUMMARY"),
-        ("09:41", "Europe protests, third straight day",
-         "Cost-of-living rallies; France's sixth weekend of protests.", "DAILY SUMMARY"),
-        ("10:25", "Ex-Italian police chief found dead",
-         "Gianni De Gennaro dies amid a Sicily bombing cover-up inquiry.", "DAILY SUMMARY"),
+        ("22 NOV", "Missile hits Kryvyi Rih; 2 killed", "AP / CNN"),
+        ("14:48", "Zelenskyy urges US to release Patriots", "DAILY SUMMARY"),
+        ("15:36", "Sea drone hits Russian corvette Merkury", "DAILY SUMMARY"),
+        ("22 NOV", "Russian cargo ship Sparta II on fire", "AP / REUTERS"),
+        ("06:15", "Finland: war is spilling over", "DAILY SUMMARY"),
+        ("09:41", "Europe protests, third straight day", "DAILY SUMMARY"),
+        ("10:25", "Ex-Italian police chief found dead", "DAILY SUMMARY"),
     ]),
     ("CLIMATE, MARKETS & THE US", [
-        ("22 NOV", "S&P 500 falls 3.7% in a week of rout",
-         "Nasdaq down 5.3% on Friday as the AI sell-off spreads to Asia.", "AP"),
-        ("22 NOV", "Trump curbs contractors' Congress replies",
-         "Contractors must consult the White House before replying.", "AP"),
-        ("22 NOV", "US intel chief: Putin 'not a friend'",
-         "DNI Jay Clayton speaks days after Trump praised Russia's leader.", "REUTERS"),
-        ("22 NOV", "Army to detonate lead in Iowa by Tuesday",
-         "68 barrels of toxic lead azide blown up, defying a court order.", "REUTERS"),
-        ("22 NOV", "Democrats' biggest House win since 1992",
-         "Recount seals the largest Democratic majority in 34 years.", "DAILY SUMMARY"),
-        ("19:16", "Delta flights briefly delayed at Atlanta",
-         "Automated system issue hits the busiest airport in the US.", "REUTERS"),
-        ("00:09", "Teen gamer helps FBI rescue missing girl",
-         "Landon, 16, and his mother alerted police after an online chat.", "DAILY SUMMARY"),
+        ("22 NOV", "S&P 500 falls 3.7% in a week of rout", "AP"),
+        ("22 NOV", "Trump curbs contractors' replies", "AP"),
+        ("22 NOV", "US intel chief: Putin 'not a friend'", "REUTERS"),
+        ("22 NOV", "Army to detonate lead in Iowa", "REUTERS"),
+        ("22 NOV", "Democrats' biggest win since 1992", "DAILY SUMMARY"),
+        ("19:16", "Delta flights briefly delayed at Atlanta", "REUTERS"),
+        ("00:09", "Teen gamer helps FBI rescue missing girl", "DAILY SUMMARY"),
     ]),
     ("ASIA & PACIFIC", [
-        ("04:19", "Candy factory fire kills 3 in Indonesia",
-         "36 workers missing and 15 rescued alive in Cikande, Banten.", "AP / REUTERS"),
-        ("22 NOV", "EU-Indonesia sign landmark trade deal",
-         "After 10 years of talks; tariffs scrapped on 98.5% of goods.", "AP / REUTERS"),
-        ("22 NOV", "South Korea minister quits over AI exam",
-         "Minister quits over rule changes to stop AI cheating.", "REUTERS"),
-        ("22 NOV", "Nepal PM begins first visit to India",
-         "Balendra Shah to meet Modi on energy, trade and connectivity.", "BANGLADESH CHRONICLE"),
-        ("22 NOV", "Bangladesh: 773 arrested in Dhaka raids",
-         "Includes 181 alleged Awami League members.", "BANGLADESH CHRONICLE"),
-        ("22 NOV", "Thai court upholds defamation verdict",
-         "Opposition lawmaker's royal defamation sentence cut to 3 years.", "AP"),
-        ("00:26", "Fred Nile, NSW political figure, dies at 92",
-         "Christian Democratic figurehead; 40 years in NSW parliament.", "DAILY SUMMARY"),
+        ("04:19", "Candy factory fire kills 3 in Indonesia", "AP / REUTERS"),
+        ("22 NOV", "EU-Indonesia sign trade deal", "AP / REUTERS"),
+        ("22 NOV", "South Korea minister quits over AI exam", "REUTERS"),
+        ("22 NOV", "Nepal PM's first visit to India", "BANGLADESH CHRONICLE"),
+        ("22 NOV", "Bangladesh: 773 arrested in Dhaka raids", "BANGLADESH CHRONICLE"),
+        ("22 NOV", "Thai court upholds defamation verdict", "AP"),
+        ("00:26", "Fred Nile, NSW figure, dies at 92", "DAILY SUMMARY"),
     ]),
     ("AFRICA & DISASTERS", [
-        ("15:03", "Sudan drone attacks kill 4 near Khartoum",
-         "RSF-blamed strikes damage a UN building while staff were inside.", "DAILY SUMMARY"),
-        ("22 NOV", "Nigeria boat capsizes, at least 24 dead",
-         "The boat was carrying people to a funeral when it overturned.", "AP"),
-        ("07:36", "Blast at Benghazi naval ammunition depot",
-         "Explosion triggers a fire at the eastern Libyan port base.", "DAILY SUMMARY"),
-        ("22 NOV", "Insecurity hinders DRC Ebola response",
-         "Aid teams cannot reach outbreak areas, charity warns.", "GEOQUEST"),
-        ("22 NOV", "Brazil storm kills 3, injures 162",
-         "Severe weather sweeps the south of the country.", "GEOQUEST"),
-        ("02:38", "Lebanon's Aoun demands Israeli pullout",
-         "Vows to bring all weapons under state control.", "DAILY SUMMARY"),
+        ("15:03", "Sudan drone attacks kill 4 near Khartoum", "DAILY SUMMARY"),
+        ("22 NOV", "Nigeria boat capsizes, at least 24 dead", "AP"),
+        ("07:36", "Blast at Benghazi naval depot", "DAILY SUMMARY"),
+        ("22 NOV", "Unrest hinders DRC Ebola response", "GEOQUEST"),
+        ("22 NOV", "Brazil storm kills 3, injures 162", "GEOQUEST"),
+        ("02:38", "Lebanon's Aoun demands Israeli pullout", "DAILY SUMMARY"),
     ]),
     ("SPORT & OBITUARIES", [
-        ("22 NOV", "Liverpool 4-0 Manchester United",
-         "Anfield rout; Hull City beat Brighton 2-0 in the Premier League.", "LIVESCORE / FBREF"),
-        ("22 NOV", "Barcelona 3-2 Villarreal in La Liga",
-         "Real Madrid 2-1 Celta; Atletico win 3-0 at Getafe.", "LIVESCORE"),
-        ("22 NOV", "Boca win Copa Sudamericana final",
-         "Boca Juniors beat Atletico Mineiro 2-0 to lift the trophy.", "LIVESCORE"),
-        ("22 NOV", "Georgia, Utah, Notre Dame stay top 3",
-         "UCLA falls in triple OT; Ohio State upset 31-28 at Nebraska.", "REUTERS / AP"),
-        ("22 NOV", "Paolo Bulgari, jeweller, dies at 89",
-         "Turned the family business into a global luxury brand.", "AP"),
-        ("22 NOV", "Phumzile Mlambo-Ngcuka dies at 71",
-         "Former South Africa deputy president and UN Women chief.", "AP"),
+        ("22 NOV", "Liverpool 4-0 Manchester United", "LIVESCORE / FBREF"),
+        ("22 NOV", "Barcelona 3-2 Villarreal in La Liga", "LIVESCORE"),
+        ("22 NOV", "Boca win Copa Sudamericana", "LIVESCORE"),
+        ("22 NOV", "Georgia, Utah, Notre Dame top 3", "REUTERS / AP"),
+        ("22 NOV", "Paolo Bulgari, jeweller, dies at 89", "AP"),
+        ("22 NOV", "Phumzile Mlambo-Ngcuka dies at 71", "AP"),
     ]),
 ]
 
 TIMELINE = [
-    ("00:09", "RESCUE"), ("02:09", "ECONOMIC WAR"), ("04:19", "FACTORY FIRE"),
-    ("07:47", "SETTLER ATTACKS"), ("12:00", "COP31 COLLAPSE"),
-    ("14:48", "PATRIOTS PLEA"), ("15:36", "MERKURY HIT"),
-    ("17:13", "TANKERS MINED"),
+    ("00:09", "RESCUE"), ("02:09", "ECON WAR"), ("04:19", "FIRE"),
+    ("07:47", "SETTLERS"), ("12:00", "COP31"),
+    ("14:48", "PATRIOTS"), ("15:36", "MERKURY"),
+    ("17:13", "TANKERS"),
 ]
 
 SHORT = {
     "REUTERS / AP": "RTR/AP", "AP / REUTERS": "AP/RTR", "REUTERS / AFP": "RTR/AFP",
-    "DAILY SUMMARY": "DS", "AP / CNN": "AP/CNN", "BANGLADESH CHRONICLE": "B.CHRONICLE",
+    "DAILY SUMMARY": "DS", "AP / CNN": "AP/CNN", "BANGLADESH CHRONICLE": "B.CHRON.",
     "LIVESCORE / FBREF": "LIVESCORE", "LIVESCORE": "LIVESCORE", "GEOQUEST": "GEOQUEST",
     "AP": "AP", "REUTERS": "RTR",
 }
@@ -156,112 +124,113 @@ SHORT = {
 TOTAL_STORIES = 3 + sum(len(items) for _, items in SECTIONS)
 
 
-def wrap(draw, text, font, max_w):
-    """Wrap text to fit max_w pixels; returns list of lines."""
-    words = text.split()
-    lines, cur = [], ""
-    for w in words:
-        trial = (cur + " " + w).strip()
-        if draw.textlength(trial, font=font) <= max_w:
-            cur = trial
-        else:
-            if cur:
-                lines.append(cur)
-            cur = w
-    if cur:
-        lines.append(cur)
-    return lines
+def cover_crop(img, tw, th):
+    """Center-crop to target aspect, then resize (deterministic)."""
+    sw, sh = img.size
+    target = tw / th
+    if sw / sh > target:
+        nw = int(sh * target)
+        x0 = (sw - nw) // 2
+        img = img.crop((x0, 0, x0 + nw, sh))
+    else:
+        nh = int(sw / target)
+        y0 = (sh - nh) // 2
+        img = img.crop((0, y0, sw, y0 + nh))
+    return img.resize((tw, th), Image.LANCZOS)
+
 
 def trunc(draw, text, font, max_w):
-    """Truncate with ellipsis to fit max_w pixels."""
     if draw.textlength(text, font=font) <= max_w:
         return text
     while text and draw.textlength(text + "…", font=font) > max_w:
         text = text[:-1]
     return text + "…"
 
+
+def caption_band(d, x, y, w, h, head, meta, head_font, meta_font):
+    d.rectangle([x, y, x + w, y + h], fill=(0, 0, 0))
+    d.text((x + 10, y + 6), trunc(d, head, head_font, w - 20),
+           font=head_font, fill=(255, 255, 255))
+    d.text((x + 10, y + 6 + head_font.size + 4), trunc(d, meta, meta_font, w - 20),
+           font=meta_font, fill=(200, 210, 225))
+
+
 def render():
     img = Image.new("RGB", (W, H), (255, 255, 255))
     d = ImageDraw.Draw(img)
 
     # ---------- masthead ----------
-    d.rectangle([0, 0, W, 104], fill=NAVY)
-    d.text((24, 12), "THE WORLD IN ONE DAY  •  SUNDAY", font=f_bold(13), fill=(180, 200, 220))
-    d.text((24, 30), "22 NOVEMBER 2026", font=f_serif_bold(48), fill=(255, 255, 255))
-    d.text((W - 24, 16), "%d STORIES" % TOTAL_STORIES, font=f_bold(16), fill=(255, 210, 90), anchor="ra")
-    d.text((W - 24, 38), "ALL TIMES UTC", font=f_bold(13), fill=(180, 200, 220), anchor="ra")
-    d.text((W - 24, 58), "SUNDAY 22 NOV 2026", font=f_bold(13), fill=(180, 200, 220), anchor="ra")
-    d.rectangle([0, 104, W, 108], fill=RED)
+    d.rectangle([0, 0, W, 72], fill=NAVY)
+    d.text((24, 8), "THE WORLD IN ONE DAY  •  SUNDAY", font=f_bold(12), fill=(180, 200, 220))
+    d.text((24, 24), "22 NOVEMBER 2026", font=f_serif_bold(40), fill=(255, 255, 255))
+    d.text((W - 24, 12), "%d STORIES  •  ALL TIMES UTC" % TOTAL_STORIES,
+           font=f_bold(13), fill=(255, 210, 90), anchor="ra")
+    d.text((W - 24, 34), "PHOTOS: AI ILLUSTRATIONS OF THE DAY'S NEWS",
+           font=f_bold(10), fill=(180, 200, 220), anchor="ra")
+    d.rectangle([0, 72, W, 76], fill=RED)
 
-    # ---------- lead row: 3 boxes ----------
-    lead_y, lead_h = 116, 132
-    col_w = (W - 48 - 2 * 12) // 3
-    for i, (t, head, detail, src) in enumerate(LEADS):
-        x = 24 + i * (col_w + 12)
-        d.rectangle([x, lead_y, x + col_w, lead_y + lead_h], fill=LIGHT, outline=RULE)
-        d.rectangle([x, lead_y, x + col_w, lead_y + 4], fill=RED)
-        d.text((x + 10, lead_y + 12), "TOP STORY  •  " + t, font=f_bold(10), fill=RED)
-        hl = wrap(d, head, f_bold(19), col_w - 20)
-        y = lead_y + 30
-        for line in hl[:2]:
-            d.text((x + 10, y), line, font=f_bold(19), fill=INK)
-            y += 22
-        dl = wrap(d, detail, f_reg(11), col_w - 20)
-        for line in dl[:2]:
-            d.text((x + 10, y + 2), line, font=f_reg(11), fill=(60, 60, 60))
-            y += 14
-        d.text((x + 10, lead_y + lead_h - 16), "SOURCE: " + src, font=f_bold(9), fill=GREY)
+    # ---------- hero photo: COP31 ----------
+    hero_x, hero_y, hero_w, hero_h = 24, 84, W - 48, 316
+    hero = cover_crop(Image.open(os.path.join(ASSETS, PHOTOS[0][0])).convert("RGB"),
+                      hero_w, hero_h)
+    img.paste(hero, (hero_x, hero_y))
+    d.rectangle([hero_x, hero_y, hero_x + hero_w, hero_y + 3], fill=RED)
+    caption_band(d, hero_x, hero_y + hero_h - 58, hero_w, 58,
+                 PHOTOS[0][1], PHOTOS[0][2], f_bold(24), f_reg(12))
+
+    # ---------- two photos side by side ----------
+    sub_y, sub_h, gap = 412, 190, 12
+    sub_w = (W - 48 - gap) // 2
+    for i in (1, 2):
+        x = 24 + (i - 1) * (sub_w + gap)
+        photo = cover_crop(Image.open(os.path.join(ASSETS, PHOTOS[i][0])).convert("RGB"),
+                           sub_w, sub_h)
+        img.paste(photo, (x, sub_y))
+        caption_band(d, x, sub_y + sub_h - 48, sub_w, 48,
+                     PHOTOS[i][1], PHOTOS[i][2], f_bold(15), f_reg(10))
 
     # ---------- UTC timeline strip ----------
-    ty = 256
-    d.rectangle([24, ty, W - 24, ty + 26], fill=CREAM, outline=RULE)
+    ty = 662
+    d.rectangle([24, ty, W - 24, ty + 24], fill=CREAM, outline=RULE)
     d.text((32, ty + 6), "UTC TIMELINE", font=f_bold(10), fill=RED)
     seg = (985 - 175) / len(TIMELINE)
     for i, (t, label) in enumerate(TIMELINE):
         cx = 175 + seg * i + seg / 2
-        d.ellipse([cx - 3, ty + 10, cx + 3, ty + 16], fill=RED)
+        d.ellipse([cx - 3, ty + 9, cx + 3, ty + 15], fill=RED)
         d.text((cx, ty + 1), t, font=f_bold(9), fill=INK, anchor="ma")
-        d.text((cx, ty + 14), label, font=f_bold(8), fill=GREY, anchor="ma")
+        d.text((cx, ty + 13), label, font=f_bold(8), fill=GREY, anchor="ma")
 
-    # ---------- body: 3 columns ----------
-    body_top, body_bottom = 292, 986
+    # ---------- compact story list: 3 columns ----------
+    body_top = 696
     col_w = (W - 48 - 2 * 16) // 3
     col_x = [24, 24 + col_w + 16, 24 + 2 * (col_w + 16)]
-    # column assignment: col0 = sections 0+4, col1 = 1+3, col2 = 2+5
     cols = [[0, 4], [1, 3], [2, 5]]
-    col_end = body_top
     for ci, sec_idx in enumerate(cols):
         x = col_x[ci]
         y = body_top
         for si in sec_idx:
             title, items = SECTIONS[si]
             d.rectangle([x, y + 2, x + 10, y + 12], fill=RED)
-            d.text((x + 14, y), title, font=f_bold(13), fill=NAVY)
-            d.line([x, y + 18, x + col_w, y + 18], fill=NAVY, width=1)
-            y += 26
-            for (t, head, detail, src) in items:
-                # headline with inline time, max 2 lines
-                full = t + "  " + head
-                hl = wrap(d, full, f_bold(13), col_w)
-                for j, line in enumerate(hl[:2]):
-                    d.text((x, y), line, font=f_bold(13), fill=INK)
-                    y += 15
-                d.text((x, y), trunc(d, detail + " [" + SHORT.get(src, src) + "]", f_reg(11), col_w),
-                       font=f_reg(11), fill=(60, 60, 60))
-                y += 13
-                y += 4  # gap between items
-            y += 5  # gap between sections
-        col_end = max(col_end, y)
+            d.text((x + 14, y), title, font=f_bold(12), fill=NAVY)
+            d.line([x, y + 17, x + col_w, y + 17], fill=NAVY, width=1)
+            y += 24
+            for (t, head, src) in items:
+                line = t + "  " + head + "  [" + SHORT.get(src, src) + "]"
+                d.text((x, y), trunc(d, line, f_bold(10), col_w),
+                       font=f_bold(10), fill=INK)
+                y += 14
+            y += 6
 
     # ---------- footer ----------
-    d.line([24, 992, W - 24, 992], fill=NAVY, width=1)
-    d.text((W // 2, 997),
+    d.line([24, 994, W - 24, 994], fill=NAVY, width=1)
+    d.text((W // 2, 999),
            "All events happened or were first reported on Sunday 22 November 2026 (any time zone).",
            font=f_reg(10), fill=GREY, anchor="ma")
-    d.text((W // 2, 1010),
-           "Sources per story: Reuters, AP, AFP, Al Jazeera, Daily Summary of World, Bangladesh Chronicle, LiveScore, FBref.",
+    d.text((W // 2, 1011),
+           "Sources: Reuters, AP, AFP, Al Jazeera, Daily Summary of World, Bangladesh Chronicle, LiveScore, FBref.",
            font=f_reg(9), fill=GREY, anchor="ma")
     return img
+
 
 if __name__ == "__main__":
     out = render()

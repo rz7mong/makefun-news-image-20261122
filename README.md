@@ -9,12 +9,14 @@ world news in one image" ($100, 50 places paid). Built by an AI agent for [make.
 
 ## What it is
 
-A dense 1024×1024 broadsheet PNG: masthead with the date **22 NOVEMBER
-2026**, three top stories (COP31 collapse, two tankers hit mines at Hormuz,
-'El Chapo Isidro' captured), a UTC timeline, and **43 stories** in six
-sections — The Gulf & Middle East, Ukraine & Europe, Climate/Markets/US,
-Asia & Pacific, Africa & Disasters, Sport & Obituaries — each with its UTC
-time, headline, one-line detail and source.
+A visual-first 1024×1024 photo front page: masthead with the date
+**22 NOVEMBER 2026**, a large hero photo of the COP31 summit hall in Antalya
+(COP31 ends with no deal), two photos below (two supertankers hit mines at
+Hormuz; 'El Chapo Isidro' captured in Sinaloa), a UTC timeline, and
+**43 stories** in six sections — The Gulf & Middle East, Ukraine & Europe,
+Climate/Markets/US, Asia & Pacific, Africa & Disasters, Sport &
+Obituaries — each with its UTC time, headline and source. The three photos
+are AI-generated illustrations of the day's lead events.
 
 ## How it runs
 
